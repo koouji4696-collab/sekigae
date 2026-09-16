@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国史 皇帝カード ― 明君か、暴君か</title>
+<style>
+  :root{
+    --paper:#EAE2D0; --paper-2:#F5EFE1; --ink:#241F1A; --ink-2:#554C40;
+    --amber:#B9711C; --jade:#3F6B4E; --vermillion:#A62B23; --line:#CBBEA2;
+    --mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","MS PMincho",serif;
+    --gothic:"Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--gothic);line-height:1.7;-webkit-text-size-adjust:100%}
+  .wrap{max-width:820px;margin:0 auto;padding:18px 16px 90px}
+  .wide{max-width:1120px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:22px}
+  h1{font-family:var(--mincho);font-size:clamp(19px,4.2vw,27px);font-weight:600;letter-spacing:.08em;margin:0}
+  h1 small{display:block;font-family:var(--gothic);font-size:11px;letter-spacing:.1em;color:var(--ink-2);font-weight:400;margin-top:5px}
+  .whoami{font-size:12px;color:var(--ink-2);text-align:right;white-space:nowrap}
+
+  .step{margin-bottom:26px}
+  .step-no{font-family:var(--mincho);font-size:12px;letter-spacing:.2em;color:var(--amber);margin-bottom:6px}
+  h2.t{font-family:var(--mincho);font-size:clamp(17px,3.6vw,21px);font-weight:600;letter-spacing:.06em;margin:0 0 14px}
+
+  label.f{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 5px}
+  input[type=text],input[type=number],textarea,select{
+    width:100%;font-family:var(--gothic);font-size:16px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:3px;padding:9px 10px}
+  textarea{min-height:110px;resize:vertical;line-height:1.65}
+  .two{display:flex;gap:12px}
+  .two>div:first-child{width:100px;flex:none}
+  .two>div:last-child{flex:1}
+
+  button{font-family:var(--gothic);font-size:15px;cursor:pointer;border-radius:3px;padding:11px 20px;transition:.15s}
+  .btn-main{background:var(--ink);color:var(--paper-2);border:1px solid var(--ink)}
+  .btn-main:hover{background:var(--amber);border-color:var(--amber)}
+  .btn-sub{background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+  .btn-sub:hover{color:var(--ink);border-color:var(--ink-2)}
+  button:disabled{opacity:.4;cursor:default}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .msg{font-size:13px;color:var(--vermillion);min-height:20px;margin-top:10px}
+  .ok{color:var(--jade)}
+  .hint{font-size:12px;color:var(--ink-2);margin-top:6px}
+  .link{background:none;border:0;padding:0;color:var(--ink-2);font-size:12px;text-decoration:underline}
+
+  /* カード選択 */
+  .marks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+  .mk-btn{font-family:var(--mincho);font-size:22px;padding:14px 0;background:#fff;border:1px solid var(--line);border-radius:4px;line-height:1.2}
+  .mk-btn small{display:block;font-family:var(--gothic);font-size:10px;color:var(--ink-2);letter-spacing:.02em;margin-top:4px}
+  .mk-btn.on{border-color:var(--ink);background:var(--ink);color:var(--paper-2)}
+  .mk-btn.on small{color:var(--paper-2)}
+  #jokerbox{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+  .mk-btn.jk{width:100%;border:2px solid var(--vermillion);color:var(--vermillion);font-size:18px;padding:16px 0}
+  .mk-btn.jk small{color:var(--ink-2)}
+  .mk-btn.jk.on{background:var(--vermillion);color:#F5EFE1}
+  .mk-btn.jk.on small{color:#EFE3DC}
+  .ranks{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .rk-btn{font-family:var(--mincho);font-size:17px;padding:11px 0;background:#fff;border:1px solid var(--line);border-radius:4px}
+  .rk-btn.on{border-color:var(--ink);background:var(--ink);color:var(--paper-2)}
+  .red{color:var(--vermillion)} .black{color:var(--ink)}
+
+  /* カード */
+  .card-slot{perspective:1400px;max-width:260px;margin:0 auto}
+  .card{position:relative;width:100%;aspect-ratio:5/7;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.25,1)}
+  .card.flipped{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;overflow:hidden}
+  .back{background:repeating-linear-gradient(45deg,rgba(185,113,28,.16) 0 2px,transparent 2px 11px),
+        repeating-linear-gradient(-45deg,rgba(185,113,28,.16) 0 2px,transparent 2px 11px),#2A241D;
+        border:2px solid var(--amber);display:flex;align-items:center;justify-content:center}
+  .back .med{width:44%;aspect-ratio:1;border-radius:50%;border:2px solid var(--amber);background:#2A241D;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mincho);font-size:44px;color:var(--amber)}
+  .front{transform:rotateY(180deg);background:linear-gradient(170deg,#F7F2E6,#E6DCC6);border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;padding:12px}
+  .corner{position:absolute;font-family:var(--mincho);line-height:1;text-align:center}
+  .corner .rk{font-size:19px;font-weight:600;display:block}
+  .corner .mk{font-size:16px;display:block;margin-top:2px}
+  .corner.tl{top:10px;left:11px} .corner.br{bottom:10px;right:11px;transform:rotate(180deg)}
+  .card-name{writing-mode:vertical-rl;font-family:var(--mincho);font-weight:600;font-size:38px;letter-spacing:.14em;max-height:74%}
+  .card-sub{writing-mode:vertical-rl;font-family:var(--mincho);font-size:13px;letter-spacing:.1em;color:var(--ink-2);margin-right:5px;padding-top:8px}
+
+  .dyn{display:inline-block;font-size:12px;letter-spacing:.14em;border:1px solid var(--jade);color:var(--jade);border-radius:2px;padding:2px 9px}
+  .pname{font-family:var(--mincho);font-size:clamp(24px,5vw,32px);font-weight:600;letter-spacing:.06em;margin:10px 0 2px}
+  .reign{font-family:var(--mincho);font-size:14px;color:var(--ink-2);margin:0 0 12px}
+  .lead{font-size:15px;margin:0 0 18px}
+  .qhead{font-family:var(--mincho);font-size:13px;letter-spacing:.1em;color:var(--amber);margin-bottom:6px}
+  ol.q{margin:0;padding-left:1.3em} ol.q li{margin-bottom:6px;font-size:15px}
+
+  /* 評価 */
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .v-btn{font-family:var(--mincho);font-size:22px;letter-spacing:.14em;padding:22px 0;background:#fff;border:2px solid var(--line);border-radius:5px}
+  .v-btn small{display:block;font-family:var(--gothic);font-size:11px;letter-spacing:.02em;color:var(--ink-2);margin-top:6px}
+  .v-btn.on.mei{border-color:var(--jade);background:var(--jade);color:#F2EDDF}
+  .v-btn.on.bou{border-color:var(--vermillion);background:var(--vermillion);color:#F2EDDF}
+  .v-btn.on small{color:#E4DCC8}
+
+  /* 朱印 */
+  .seal{display:flex;flex-direction:column;align-items:center;justify-content:center;margin:22px auto;
+    width:140px;height:140px;border:3px solid var(--vermillion);border-radius:4px;color:var(--vermillion);
+    font-family:var(--mincho);transform:rotate(-4deg);background:rgba(166,43,35,.05);
+    animation:pop .5s cubic-bezier(.2,1.2,.3,1) both}
+  .seal .sl{font-size:11px;letter-spacing:.24em;margin-bottom:5px}
+  .seal .sv{font-size:26px;font-weight:600;letter-spacing:.08em;line-height:1.35;text-align:center}
+  @keyframes pop{from{opacity:0;transform:rotate(-4deg) scale(.7)}to{opacity:1;transform:rotate(-4deg) scale(1)}}
+  @media(prefers-reduced-motion:reduce){.card,.seal{transition:none;animation:none}}
+
+  /* 座席表 */
+  .blackboard{background:var(--jade);color:#EDE6D0;text-align:center;font-family:var(--mincho);
+    letter-spacing:.6em;font-size:13px;padding:7px;border-radius:3px;margin-bottom:18px}
+  .scroll{overflow-x:auto;padding-bottom:6px}
+  .roomwrap{display:flex;gap:9px;align-items:stretch;min-width:540px}
+  .side{writing-mode:vertical-rl;font-family:var(--mincho);font-size:11px;letter-spacing:.35em;color:var(--ink-2);
+    display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line);padding-right:7px}
+  .room{flex:1}
+  .colhead,.roomgrid{display:grid;gap:8px}
+  .colhead{margin-bottom:7px;font-family:var(--mincho);font-size:11px;color:var(--ink-2);text-align:center;letter-spacing:.06em}
+  .rownum{font-family:var(--mincho);font-size:10px;color:var(--ink-2);display:flex;align-items:center;justify-content:center}
+  .pickseat{border:1px solid var(--line);background:#fff;border-radius:3px;padding:12px 2px;font-family:var(--mincho);
+    font-size:12px;cursor:pointer;text-align:center;color:var(--ink)}
+  .pickseat.taken{background:transparent;border-style:dashed;color:var(--line);cursor:default}
+  .pickseat.on{background:var(--vermillion);border-color:var(--vermillion);color:#F5EFE1}
+  .emps{display:flex;flex-wrap:wrap;gap:7px;max-height:280px;overflow-y:auto;padding:2px}
+  .empchip{border:1px solid var(--line);background:#fff;border-radius:3px;padding:6px 10px;font-family:var(--mincho);font-size:14px;cursor:pointer}
+  .empchip.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2)}
+  .empchip em{font-style:normal;font-size:10px;font-family:var(--gothic);color:var(--ink-2);margin-left:5px}
+  .empchip.on em{color:var(--paper-2)}
+  h3.sec{font-family:var(--mincho);font-size:15px;font-weight:600;letter-spacing:.06em;margin:22px 0 9px}
+  .seat{border:1px solid var(--line);background:#fff;border-radius:3px;padding:7px 8px;font-size:12px;position:relative}
+  .seat.blank{background:transparent;border-style:dashed;color:var(--ink-2);text-align:center;padding:16px 8px}
+  .seat .no{font-family:var(--mincho);font-size:10px;color:var(--ink-2);letter-spacing:.08em}
+  .seat .emp{font-family:var(--mincho);font-size:14px;font-weight:600;margin:2px 0 1px}
+  .seat .who{font-size:11px;color:var(--ink-2);word-break:break-all}
+  .badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:2px;color:#F5EFE1;margin-top:4px}
+  .badge.mei{background:var(--jade)} .badge.bou{background:var(--vermillion)}
+  .badge.abs{background:var(--ink-2)}
+  .reason{font-size:11px;color:var(--ink-2);margin-top:4px;display:none}
+  .seat.open .reason{display:block}
+
+  table.list{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+  table.list th,table.list td{border:1px solid var(--line);padding:5px 7px;text-align:left}
+  table.list th{background:var(--paper-2);font-weight:600;font-size:12px}
+
+  .bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink-2);
+    border:1px solid var(--line);background:var(--paper-2);border-radius:4px;padding:10px 14px;margin-bottom:18px}
+  .bar b{font-family:var(--mincho);font-size:20px;color:var(--amber);font-weight:600}
+  fieldset{border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin:0 0 20px}
+  legend{font-family:var(--mincho);font-size:14px;letter-spacing:.06em;padding:0 6px}
+  .foot{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--ink-2);display:flex;gap:14px;flex-wrap:wrap}
+  @media print{.noprint{display:none!important} body{background:#fff}}
+</style>
+</head>
+<body>
+
+<!-- ============ 生徒画面 ============ -->
+<div class="wrap" id="stu">
+  <header>
+    <h1>中国史 皇帝カード<small>引いて、調べて、明君か暴君かを決めたら、席がわかる</small></h1>
+    <div class="whoami" id="whoami"></div>
+  </header>
+
+  <!-- 1 名前 -->
+  <div class="step" id="s1">
+    <div class="step-no">その一</div>
+    <h2 class="t">はじめに、あなたのことを教えてください</h2>
+    <label class="f" for="cls">クラス</label>
+    <select id="cls"></select>
+    <div class="two">
+      <div><label class="f" for="no">出席番号</label><input type="number" id="no" min="1" max="60" inputmode="numeric"></div>
+      <div><label class="f" for="name">名前</label><input type="text" id="name" placeholder="八幡 幸司"></div>
+    </div>
+    <div class="acts"><button class="btn-main" id="go1">次へ</button></div>
+    <div class="msg" id="m1"></div>
+  </div>
+
+  <!-- 2 カード -->
+  <div class="step" id="s2" hidden>
+    <div class="step-no">その二</div>
+    <h2 class="t" id="s2t">カードを決めます</h2>
+    <div id="pick" hidden>
+      <div class="hint" style="margin-bottom:10px">配られたトランプのマークと数字を選んでください。</div>
+      <div class="marks" id="marks"></div>
+      <div class="ranks" id="ranks"></div>
+      <div id="jokerbox" hidden>
+        <div class="hint" style="margin-bottom:8px">ジョーカーを引いた人は、マークのかわりにこちらを押してください。</div>
+        <button class="mk-btn jk" id="jbtn">ジョーカー<small>席と調べる皇帝を、先に自分で選べます</small></button>
+      </div>
+    </div>
+    <div id="lot" hidden>
+      <div class="card-slot"><div class="card" id="lotcard"><div class="face back"><div class="med">史</div></div><div class="face front" id="lotfront"></div></div></div>
+    </div>
+    <div class="acts">
+      <button class="btn-main" id="go2">この一枚で決める</button>
+      <button class="btn-sub" id="back2">戻る</button>
+    </div>
+    <div class="msg" id="m2"></div>
+  </div>
+
+  <!-- J ジョーカー -->
+  <div class="step" id="sj" hidden>
+    <div class="step-no">ジョーカー</div>
+    <h2 class="t">好きな席と、調べる皇帝を先に選べます</h2>
+    <p class="hint">ジョーカーを引いた人の特権です。ほかの人が決まる前に、いま空いている中から選べます。</p>
+    <h3 class="sec">① 席を選ぶ</h3>
+    <p class="hint">白いマスが空席です。座りたいマスをタップしてください（×は先に埋まった席）。</p>
+    <div id="jseats"></div>
+    <h3 class="sec">② 調べる皇帝を選ぶ</h3>
+    <p class="hint">まだ誰も担当していない皇帝です。名前をタップしてください。</p>
+    <div id="jemps"></div>
+    <div class="acts"><button class="btn-main" id="jok">これで決める</button></div>
+    <div class="msg" id="mj"></div>
+  </div>
+
+  <!-- 3 人物 -->
+  <div class="step" id="s3" hidden>
+    <div class="step-no">その三</div>
+    <h2 class="t">あなたが調べるのはこの人です</h2>
+    <div class="card-slot" style="margin-bottom:22px"><div class="card flipped" id="mycard"><div class="face back"><div class="med">史</div></div><div class="face front" id="myfront"></div></div></div>
+    <div id="pinfo"></div>
+    <div class="acts"><button class="btn-main" id="go3">調べ終わったら、判断へ</button></div>
+  </div>
+
+  <!-- 4 評価 -->
+  <div class="step" id="s5" hidden>
+    <div class="step-no">その四</div>
+    <h2 class="t" id="s5t">明君か、暴君か</h2>
+    <div class="verdict">
+      <button class="v-btn mei" data-v="明君">明君<small>国と民のためになった</small></button>
+      <button class="v-btn bou" data-v="暴君">暴君<small>国と民を苦しめた</small></button>
+    </div>
+    <label class="f" for="reason">そう判断した根拠（具体的な政策・事件を一つ挙げて）</label>
+    <textarea id="reason" placeholder="例：均田制で農民に土地を配り、税収と兵力を安定させたから。ただし…"></textarea>
+    <div class="acts"><button class="btn-main" id="send">提出して席を見る</button></div>
+    <div class="msg" id="m5"></div>
+  </div>
+
+  <!-- 5 席 -->
+  <div class="step" id="s6" hidden>
+    <div class="step-no">その五</div>
+    <h2 class="t">あなたの席が決まりました</h2>
+    <div id="myseal"></div>
+    <div class="acts"><button class="btn-main" id="go6">みんなの座席表を見る</button></div>
+  </div>
+
+  <!-- 7 全体 -->
+  <div class="step" id="s7" hidden>
+    <h2 class="t">今日の中国皇帝 座席表</h2>
+    <div class="bar noprint"><span>着席 <b id="cnt">0</b> 人</span><span id="pend"></span>
+      <button class="btn-sub" id="refresh" style="padding:6px 14px;font-size:13px">更新</button></div>
+    <div class="blackboard">黒板</div>
+    <div id="chart"></div>
+    <div class="hint noprint">席をタップすると、その人の判断の根拠が読めます。</div>
+  </div>
+
+  <div class="foot noprint">
+    <button class="link" id="toTeacher">教員用</button>
+    <button class="link" id="clearMe">別の人として入力し直す</button>
+  </div>
+</div>
+
+<!-- ============ 教員画面 ============ -->
+<div class="wrap wide" id="tea" hidden>
+  <header>
+    <h1>中国史 皇帝カード　教員用<small>クラスの開始・欠席者の代理登録・記録の確認</small></h1>
+    <button class="link" id="toStudent">生徒画面へ</button>
+  </header>
+
+  <div id="gate">
+    <label class="f" for="pass">合言葉</label>
+    <input type="text" id="pass" style="max-width:260px">
+    <div class="acts"><button class="btn-main" id="unlock">開く</button></div>
+    <div class="msg" id="mg"></div>
+  </div>
+
+  <div id="panel" hidden>
+    <fieldset>
+      <legend>クラスを開始する</legend>
+      <div class="two">
+        <div style="width:160px"><label class="f" for="tcls">クラス</label><select id="tcls"></select></div>
+        <div><label class="f" for="tmode">カードの決め方</label>
+          <select id="tmode">
+            <option value="配布">教員がトランプを配る（生徒がマークと数字を入力）</option>
+            <option value="くじ">生徒が画面でくじを引く</option>
+          </select></div>
+      </div>
+      <label class="f">使う時代</label>
+      <div class="marks" id="tsuits"></div>
+      <div class="two" style="margin-top:6px">
+        <div><label class="f" for="tcols">列数（窓側から）</label><input type="number" id="tcols" min="1" max="12" value="6"></div>
+        <div><label class="f" for="trows">1列あたりの人数（前から）</label><input type="number" id="trows" min="1" max="12" value="5"></div>
+      </div>
+      <label class="f" for="trule">席の決め方</label>
+      <select id="trule">
+        <option value="random">空いている席からランダムに決める</option>
+        <option value="order">提出した順に、前の列から詰めていく</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:7px;font-size:14px;margin-top:12px;cursor:pointer">
+        <input type="checkbox" id="tjoker" checked> ジョーカー2枚を入れる（引いた人は席と皇帝を先に選べる）
+      </label>
+      <div class="acts">
+        <button class="btn-main" id="startCls">このクラスを開始（記録はそのまま）</button>
+        <button class="btn-sub" id="resetCls">このクラスの記録を全部消す</button>
+      </div>
+      <div class="msg" id="mt"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>欠席者の代わりに引く</legend>
+      <div class="two">
+        <div><label class="f" for="ano">出席番号</label><input type="number" id="ano" min="1" max="60"></div>
+        <div><label class="f" for="aname">名前</label><input type="text" id="aname"></div>
+      </div>
+      <div class="acts"><button class="btn-main" id="absent">引いて席を決める</button></div>
+      <div class="msg" id="ma"></div>
+    </fieldset>
+
+    <div class="bar noprint">
+      <span>着席 <b id="tcnt">0</b> 人</span><span id="tpend"></span>
+      <button class="btn-sub" id="trefresh" style="padding:6px 14px;font-size:13px">更新</button>
+      <button class="btn-sub" id="tprint" style="padding:6px 14px;font-size:13px">座席表を印刷</button>
+      <button class="btn-sub" id="tcopy" style="padding:6px 14px;font-size:13px">表計算用にコピー</button>
+      <span class="msg ok" id="mc" style="margin:0"></span>
+    </div>
+    <div class="blackboard">黒板</div>
+    <div id="tchart"></div>
+    <div class="noprint" id="tlist"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ======================= 設定（ここだけ書き換える） ======================= */
+const API_URL = "ここにGASウェブアプリのURLを貼る";
+const CLASSES = ["高2", "高3"];
+/* ======================================================================= */
+
+const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const SUITS = [
+ {id:"s",mark:"♠",red:false,era:"秦・漢",han:"秦漢",cards:[
+  {n:"始皇帝",s:"嬴政",d:"秦",r:"前221–前210",t:"中国で初めて「皇帝」を名乗り、郡県制で全土を直接支配した。",q:["「皇帝」という称号は、どんな考えから作られたのか。","郡県制は周の封建制と何がちがうのか。"]},
+  {n:"二世皇帝",s:"胡亥",d:"秦",r:"前210–前207",t:"趙高に操られるうちに陳勝・呉広の乱が起き、秦は十五年で倒れた。",q:["秦がわずか十五年で滅んだ理由を三つ挙げよう。","陳勝・呉広の乱を起こしたのはどんな人々か。"]},
+  {n:"高祖",s:"劉邦",d:"前漢",r:"前202–前195",t:"農民出身から項羽を破り、郡国制で漢を開いた。",q:["なぜ郡国制という折衷策をとったのか。","劉邦と項羽の勝敗を分けたものは何か。"]},
+  {n:"呂后",s:"呂雉",d:"前漢",r:"前195–前180",t:"皇帝ではないが実権を握り、外戚が政治を動かす先例をつくった。",q:["呂后はどうやって権力を握ったのか。","「外戚」とは何か。のちの時代にどう影響したか。"]},
+  {n:"文帝",s:"劉恒",d:"前漢",r:"前180–前157",t:"倹約と減税で国力を蓄え、匈奴とは和親策をとった。",q:["「文景の治」とはどんな政治か。","建国期の漢が匈奴に対して守勢だったのはなぜか。"]},
+  {n:"景帝",s:"劉啓",d:"前漢",r:"前157–前141",t:"呉楚七国の乱を鎮め、諸侯王の力を削いで中央集権を固めた。",q:["呉楚七国の乱はなぜ起きたのか。","乱のあと、郡国制は実質的にどう変わったか。"]},
+  {n:"武帝",s:"劉徹",d:"前漢",r:"前141–前87",t:"匈奴を攻め、張騫を西域へ送り、儒学を官学とした前漢の最盛期。",q:["張騫の派遣は結果的に何をもたらしたか。","塩・鉄の専売や均輸・平準はなぜ必要になったのか。"]},
+  {n:"宣帝",s:"劉詢",d:"前漢",r:"前74–前49",t:"西域都護を置き、匈奴を服属させた「中興」の皇帝。",q:["西域都護はどんな役割を果たしたか。","なぜ宣帝の時代は「中興」と呼ばれるのか。"]},
+  {n:"王莽",s:"—",d:"新",r:"8–23",t:"漢を奪い、周の古制を理想に改革したが、赤眉の乱で倒れた。",q:["王莽の復古的な改革はなぜ失敗したのか。","儒教の理想と現実の政治は、どこでぶつかったか。"]},
+  {n:"光武帝",s:"劉秀",d:"後漢",r:"25–57",t:"漢を再興して洛陽に都を置き、倭の奴国に金印を与えたと伝わる。",q:["前漢と後漢では、政治の担い手はどう変わったか。","金印は日本の歴史とどうつながるか。"]},
+  {n:"明帝",s:"劉荘",d:"後漢",r:"57–75",t:"班超を西域に派遣し、仏教が中国に伝わった頃の皇帝とされる。",q:["班超・班固・班昭はそれぞれ何をした人物か。","仏教はいつ、どの経路で中国に入ったか。"]},
+  {n:"桓帝",s:"劉志",d:"後漢",r:"146–168",t:"宦官が力を持ち、党錮の禁で儒学官僚を弾圧した。",q:["党錮の禁とはどんな事件か。","宦官はなぜ皇帝の近くで力を持てたのか。"]},
+  {n:"献帝",s:"劉協",d:"後漢",r:"189–220",t:"曹操に擁立され、最後は魏に位を譲って漢は幕を閉じた。",q:["黄巾の乱の原因は何か。太平道とは何か。","「禅譲」はどんな建前で行われたのか。"]}]},
+ {id:"h",mark:"♥",red:true,era:"三国・晋・南朝",han:"三国南朝",cards:[
+  {n:"曹操",s:"魏・武帝",d:"魏",r:"155–220",t:"屯田制と実力本位の人材登用で華北を制したが、皇帝にはならなかった。",q:["屯田制はどんな仕組みで、何を解決したか。","曹操が皇帝を名乗らなかったのはなぜか。"]},
+  {n:"文帝",s:"曹丕",d:"魏",r:"220–226",t:"献帝から禅譲を受けて魏を建て、九品中正を始めた。",q:["九品中正はどんな仕組みか。","その結果どんな階層が生まれたか。"]},
+  {n:"昭烈帝",s:"劉備",d:"蜀",r:"221–223",t:"漢の後継を名乗り、成都で蜀を建てた。",q:["劉備が「漢」の正統を主張したのはなぜか。","諸葛亮の「天下三分の計」とはどんな構想か。"]},
+  {n:"大帝",s:"孫権",d:"呉",r:"229–252",t:"長江下流域に呉を建て、江南の開発を進めた。",q:["江南の開発は中国史に何をもたらしたか。","赤壁の戦いは何を決定づけたか。"]},
+  {n:"武帝",s:"劉裕",d:"宋",r:"420–422",t:"低い家柄の軍人から皇帝へ。東晋を倒し南朝の宋を開いた。",q:["貴族でない者が皇帝になれたのはなぜか。","南朝の「宋」は、のちの宋とどうちがうか。"]},
+  {n:"武帝",s:"司馬炎",d:"西晋",r:"265–290",t:"呉を滅ぼして中国を再統一し、占田・課田法を定めた。",q:["占田・課田法のねらいは何か。","西晋の統一が短命に終わったのはなぜか。"]},
+  {n:"恵帝",s:"司馬衷",d:"西晋",r:"290–306",t:"八王の乱で一族が争い、遊牧民の華北進出を招いた。",q:["八王の乱はどんな争いだったか。","遊牧諸民族はなぜ華北に入ってきたのか。"]},
+  {n:"元帝",s:"司馬睿",d:"東晋",r:"317–322",t:"建康で東晋を再建。貴族に支えられた王朝の始まり。",q:["「王と馬、天下を共にす」とはどういう意味か。","華北からの移住は江南をどう変えたか。"]},
+  {n:"劉淵",s:"—",d:"漢（前趙）",r:"304–310",t:"匈奴の首長でありながら「漢」を名乗り、五胡十六国の幕が開いた。",q:["匈奴の王がなぜ「漢」の後継を名乗ったのか。","「五胡」とはどの五つの集団か。"]},
+  {n:"石勒",s:"—",d:"後趙",r:"319–333",t:"奴隷として売られた身から皇帝にのぼった羯の指導者。",q:["石勒はどんな経歴で皇帝になったのか。","この時期の華北を統治する難しさはどこにあったか。"]},
+  {n:"苻堅",s:"—",d:"前秦",r:"357–385",t:"華北を統一しながら、淝水の戦いで東晋に大敗して崩れた。",q:["淝水の戦いの結果は何を決めたか。","苻堅の民族融和策はどこでつまずいたか。"]},
+  {n:"武帝",s:"蕭衍",d:"梁",r:"502–549",t:"仏教に深く帰依し「皇帝菩薩」と呼ばれたが、侯景の乱で命を落とした。",q:["南朝で仏教はどのように広まったか。","「皇帝菩薩」という言い方は何を意味するか。"]},
+  {n:"後主",s:"陳叔宝",d:"陳",r:"582–589",t:"南朝最後の皇帝。隋に降り、長い分裂が終わった。",q:["南朝の四王朝を順に挙げよう。","南北朝の分裂が百七十年も続いたのはなぜか。"]}]},
+ {id:"d",mark:"♦",red:true,era:"北朝・隋・唐前期",han:"北朝隋唐",cards:[
+  {n:"道武帝",s:"拓跋珪",d:"北魏",r:"386–409",t:"鮮卑の拓跋部をまとめ、北魏を建てた。",q:["鮮卑とはどんな人々か。","部族の集まりを国家に変えるために何をしたか。"]},
+  {n:"太武帝",s:"拓跋燾",d:"北魏",r:"423–452",t:"華北を統一し、道教を保護して仏教を弾圧した。",q:["「三武一宗の法難」とは何か。","寇謙之の新天師道はどんな宗教か。"]},
+  {n:"孝文帝",s:"元宏",d:"北魏",r:"471–499",t:"洛陽に遷都し、漢化政策と均田制を進めた。",q:["漢化政策の具体例を三つ挙げよう。","均田制はどんな仕組みで、何をねらったか。"]},
+  {n:"武帝",s:"宇文邕",d:"北周",r:"560–578",t:"北斉を倒して華北を再統一し、府兵制を整えた。",q:["府兵制とはどんな兵制か。","北周の制度は隋唐に何を残したか。"]},
+  {n:"文帝",s:"楊堅",d:"隋",r:"581–604",t:"南北朝を統一し、科挙・均田制・租庸調を整えた。",q:["科挙は官僚のあり方を何から何へ変えたか。","統一が可能になった条件は何か。"]},
+  {n:"煬帝",s:"楊広",d:"隋",r:"604–618",t:"大運河を開き高句麗へ遠征したが、隋は二代で倒れた。",q:["大運河は何と何を結び、何のために作られたか。","高句麗遠征がなぜ命取りになったのか。"]},
+  {n:"高祖",s:"李淵",d:"唐",r:"618–626",t:"隋末の混乱のなかで挙兵し、長安を都に唐を建てた。",q:["唐はどんな勢力を基盤に建国されたか。","唐は隋の制度をどこまで引き継いだか。"]},
+  {n:"太宗",s:"李世民",d:"唐",r:"626–649",t:"「貞観の治」。律令体制を固め、周辺を羈縻政策で治めた。",q:["貞観の治の政治にはどんな特徴があるか。","羈縻政策と「天可汗」の称号は何を示すか。"]},
+  {n:"高宗",s:"李治",d:"唐",r:"649–683",t:"唐の領域が最大に広がり、白村江で倭・百済軍を破った。",q:["白村江の戦いは日本に何をもたらしたか。","唐の最大領域はどこまで及んだか。"]},
+  {n:"則天武后",s:"武照",d:"周",r:"690–705",t:"中国史上ただ一人の女性皇帝。科挙官僚を大胆に登用した。",q:["どうやって権力を握り、皇帝にまでなったのか。","彼女の時代に科挙官僚が増えたのはなぜか。"]},
+  {n:"中宗",s:"李顕",d:"唐",r:"705–710",t:"皇后の韋后らに政治を左右され、「武韋の禍」と呼ばれた。",q:["「武韋の禍」とはどんな時期を指すか。","后妃や外戚が力を持てたのはなぜか。"]},
+  {n:"睿宗",s:"李旦",d:"唐",r:"710–712",t:"兄弟で二度即位し、子の李隆基（玄宗）に位を譲った。",q:["この時期に相次いだ政変を年表に整理しよう。","唐の皇位継承が荒れがちだったのはなぜか。"]},
+  {n:"玄宗",s:"李隆基",d:"唐",r:"712–756",t:"「開元の治」で栄えながら、募兵制と節度使が安史の乱を招いた。",q:["開元の治はなぜ傾いていったのか。","府兵制から募兵制への転換は何を意味するか。"]}]},
+ {id:"c",mark:"♣",red:false,era:"唐後期",han:"唐後期",cards:[
+  {n:"安禄山",s:"—",d:"燕",r:"756–757",t:"節度使の地位から挙兵し、「大燕皇帝」を名乗った。",q:["安史の乱はなぜ起きたのか。","異民族出身の武将が大軍を握れたのはなぜか。"]},
+  {n:"史思明",s:"—",d:"燕",r:"759–761",t:"安禄山のあとを継ぎ、乱の後半を戦った。",q:["安史の乱はどのように終わったか。","ウイグルの援軍は唐に何をもたらしたか。"]},
+  {n:"粛宗",s:"李亨",d:"唐",r:"756–762",t:"逃れた先で即位し、長安の奪回にこぎつけた。",q:["乱のあと、節度使はどう扱われたか。","唐の財政の柱はどう変わったか。"]},
+  {n:"代宗",s:"李豫",d:"唐",r:"762–779",t:"乱を収めたものの、各地に藩鎮が居すわった。",q:["藩鎮とはどんな存在か。","唐はなぜ藩鎮を解体できなかったのか。"]},
+  {n:"徳宗",s:"李适",d:"唐",r:"779–805",t:"楊炎の建議で両税法を導入し、税の原則を変えた。",q:["両税法は租庸調とどこがちがうか。","均田制が崩れたのはなぜか。"]},
+  {n:"順宗",s:"李誦",d:"唐",r:"805",t:"在位一年足らず。改革（永貞革新）は宦官に潰された。",q:["永貞革新は何をめざしたか。","宦官はなぜ皇帝の即位を左右できたのか。"]},
+  {n:"憲宗",s:"李純",d:"唐",r:"805–820",t:"藩鎮を討って中央の権威を一時取りもどした（元和中興）。",q:["元和中興ではどんな手を打ったか。","その回復が続かなかったのはなぜか。"]},
+  {n:"文宗",s:"李昂",d:"唐",r:"826–840",t:"甘露の変で宦官の排除に失敗し、官僚は党争に明け暮れた。",q:["甘露の変とはどんな事件か。","牛李の党争は何をめぐる対立だったか。"]},
+  {n:"武宗",s:"李炎",d:"唐",r:"840–846",t:"会昌の廃仏で仏教教団の富と人手を国家に取りもどそうとした。",q:["会昌の廃仏はなぜ行われたのか。","祆教・マニ教・景教はこのときどうなったか。"]},
+  {n:"宣宗",s:"李忱",d:"唐",r:"846–859",t:"「小太宗」と呼ばれた、唐末最後の安定期。",q:["なぜ「小太宗」と呼ばれたのか。","この頃の東アジアの交易はどうなっていたか。"]},
+  {n:"懿宗",s:"李漼",d:"唐",r:"859–873",t:"奢侈と重税が各地に反乱の火種をまいた。",q:["塩の専売と密売はなぜ問題になったか。","唐末の民衆はどんな暮らしをしていたか。"]},
+  {n:"黄巣",s:"—",d:"斉",r:"880–884",t:"塩の密売人から挙兵し、長安を占領して「大斉皇帝」を称した。",q:["黄巣の乱はなぜ全国に広がったのか。","この乱は唐に何を残したか。"]},
+  {n:"太祖",s:"朱全忠",d:"後梁",r:"907–912",t:"黄巣軍から唐に寝返り、907年に唐を滅ぼして後梁を建てた。",q:["907年に何が起きたのか。","五代十国とはどんな時代の始まりか。"]}]}
+];
+
+const $ = id => document.getElementById(id);
+const suitOf = id => SUITS.find(s=>s.id===id);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return mem[k]||null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){ delete mem[k]; } }
+};
+const mem = {};
+
+/* ---------- API ---------- */
+async function api(action, data){
+  if(!API_URL || API_URL.indexOf("http") !== 0) throw new Error("API_URL が設定されていません（HTMLの上のほうを確認してください）");
+  const res = await fetch(API_URL, {
+    method:"POST", redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(Object.assign({action}, data||{}))
+  });
+  const j = await res.json();
+  if(!j.ok) throw new Error(j.error || "通信に失敗しました");
+  return j.data;
+}
+
+/* ---------- 画面切替 ---------- */
+const STEPS = ["s1","s2","sj","s3","s5","s6","s7"];
+function show(id){ STEPS.forEach(x=>$(x).hidden = (x!==id)); window.scrollTo(0,0); }
+function showBoth(ids){ STEPS.forEach(x=>$(x).hidden = !ids.includes(x)); window.scrollTo(0,0); }
+
+/* ---------- 状態 ---------- */
+const ME = {cls:"", no:"", name:"", suit:"", rank:-1, dispSuit:"", dispRank:-1,
+            verdict:"", seat:null, jSeat:null, jEmp:null};
+let CONF = null;
+
+/* ---------- 初期化 ---------- */
+CLASSES.forEach(c=>{
+  $("cls").insertAdjacentHTML("beforeend", '<option>'+esc(c)+'</option>');
+  $("tcls").insertAdjacentHTML("beforeend", '<option>'+esc(c)+'</option>');
+});
+SUITS.forEach(s=>{
+  $("marks").insertAdjacentHTML("beforeend",
+    '<button class="mk-btn '+(s.red?"red":"black")+'" data-s="'+s.id+'">'+s.mark+'<small>'+s.era+'</small></button>');
+  $("tsuits").insertAdjacentHTML("beforeend",
+    '<button class="mk-btn on '+(s.red?"red":"black")+'" data-ts="'+s.id+'">'+s.mark+'<small>'+s.era+'</small></button>');
+});
+function renderRanks(isJoker){
+  const list = isJoker ? ["1枚目","2枚目"] : RANKS;
+  $("ranks").style.gridTemplateColumns = isJoker ? "repeat(2,1fr)" : "repeat(7,1fr)";
+  $("ranks").innerHTML = list.map((r,i)=>'<button class="rk-btn" data-r="'+i+'">'+r+'</button>').join("");
+  ME.rank = -1;
+}
+renderRanks(false);
+
+$("marks").addEventListener("click", e=>{
+  const b = e.target.closest("[data-s]"); if(!b) return;
+  [...$("marks").children].forEach(x=>x.classList.remove("on"));
+  $("jbtn").classList.remove("on");
+  b.classList.add("on"); ME.suit = b.dataset.s;
+  renderRanks(false);
+});
+$("jbtn").addEventListener("click", ()=>{
+  [...$("marks").children].forEach(x=>x.classList.remove("on"));
+  $("jbtn").classList.add("on"); ME.suit = "j";
+  renderRanks(true);
+  $("ranks").scrollIntoView({block:"center", behavior:"smooth"});
+});
+$("ranks").addEventListener("click", e=>{
+  const b = e.target.closest("[data-r]"); if(!b) return;
+  [...$("ranks").children].forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); ME.rank = +b.dataset.r;
+});
+$("tsuits").addEventListener("click", e=>{
+  const b = e.target.closest("[data-ts]"); if(!b) return;
+  b.classList.toggle("on");
+});
+
+/* ---------- 手順1：名前 ---------- */
+$("go1").addEventListener("click", async ()=>{
+  const cls = $("cls").value, no = $("no").value.trim(), name = $("name").value.trim();
+  if(!name){ $("m1").textContent = "名前を入れてください。"; return; }
+  ME.cls = cls; ME.no = no; ME.name = name;
+  store.set("ecard_me", JSON.stringify({cls,no,name}));
+  $("whoami").textContent = cls + " " + (no?no+"番 ":"") + name;
+  $("m1").textContent = "確認しています…";
+  try{
+    const st = await api("state", {cls});
+    CONF = st.conf;
+    if(!CONF){ $("m1").textContent = "先生がまだこのクラスを始めていません。"; return; }
+    const mine = st.entries.find(x=>x.name===name && x.cls===cls);
+    if(mine){
+      ME.suit = mine.suit; ME.rank = mine.rank; ME.seat = mine;
+      setDisp(mine.suit, mine.rank, mine.pick);
+      showSeal(); showBoth(["s6"]); return;
+    }
+    $("m1").textContent = "";
+    openStep2();
+  }catch(err){ $("m1").textContent = err.message; }
+});
+
+function openStep2(){
+  const lot = CONF.mode === "くじ";
+  $("pick").hidden = lot; $("lot").hidden = !lot;
+  $("jokerbox").hidden = !CONF.joker;
+  $("jbtn").classList.remove("on");
+  $("s2t").textContent = lot ? "くじを引きます" : "配られたカードを入力します";
+  $("go2").textContent = lot ? "くじを引く" : "この一枚で決める";
+  $("lotcard").classList.remove("flipped");
+  show("s2");
+}
+function setDisp(suit, rank, pick){
+  if(suit === "j" && pick){ const a = String(pick).split("-"); ME.dispSuit = a[0]; ME.dispRank = +a[1]; }
+  else { ME.dispSuit = suit; ME.dispRank = rank; }
+}
+$("back2").addEventListener("click", ()=>show("s1"));
+
+/* ---------- 手順2：カード確定 ---------- */
+$("go2").addEventListener("click", async ()=>{
+  $("m2").textContent = "";
+  const lot = CONF.mode === "くじ";
+  if(!lot && (!ME.suit || ME.rank < 0)){ $("m2").textContent = "マークと数字の両方を選んでください。"; return; }
+  $("go2").disabled = true;
+  try{
+    const d = await api("claim", {cls:ME.cls, no:ME.no, name:ME.name,
+      suit: lot ? "" : ME.suit, rank: lot ? -1 : ME.rank});
+    const isJ = !!d.joker;
+    if(!isJ){ ME.suit = d.suit; ME.rank = d.rank; setDisp(d.suit, d.rank, ""); }
+    else { ME.suit = "j"; ME.rank = (d.jokerNo || 1) - 1; }
+    const goNext = ()=>{
+      if(isJ && d.needChoice){ openJoker(d); }
+      else { if(isJ) setDisp("j", ME.rank, d.pick); openStep3(); }
+    };
+    if(lot){
+      $("lotfront").innerHTML = isJ ? jokerFaceHTML() : faceHTML(ME.suit, ME.rank);
+      $("lotcard").classList.add("flipped");
+      setTimeout(goNext, 900);
+    }else{ goNext(); }
+  }catch(err){ $("m2").textContent = err.message; }
+  $("go2").disabled = false;
+});
+
+function jokerFaceHTML(){
+  return '<div class="corner tl red"><span class="rk">JK</span></div>'+
+         '<div class="corner br red"><span class="rk">JK</span></div>'+
+         '<div class="card-name red">ジョーカー</div>';
+}
+
+function faceHTML(sid, rank){
+  const su = suitOf(sid), c = su.cards[rank], cls = su.red ? "red":"black";
+  return '<div class="corner tl '+cls+'"><span class="rk">'+RANKS[rank]+'</span><span class="mk">'+su.mark+'</span></div>'+
+         '<div class="corner br '+cls+'"><span class="rk">'+RANKS[rank]+'</span><span class="mk">'+su.mark+'</span></div>'+
+         '<div class="card-name">'+esc(c.n)+'</div><div class="card-sub">'+esc(c.s)+'</div>';
+}
+
+function openStep3(){
+  const su = suitOf(ME.dispSuit), c = su.cards[ME.dispRank];
+  $("myfront").innerHTML = faceHTML(ME.dispSuit, ME.dispRank);
+  $("pinfo").innerHTML =
+    (ME.suit === "j" ? '<p class="hint" style="color:var(--vermillion)">ジョーカーの特権で、あなたが自分で選んだ皇帝です。</p>' : "")+
+    '<span class="dyn">'+esc(c.d)+'</span>'+
+    '<div class="pname">'+esc(c.n)+'</div>'+
+    '<p class="reign">'+esc(c.s!=="—"?c.s+"　":"")+esc(c.r)+'</p>'+
+    '<p class="lead">'+esc(c.t)+'</p>'+
+    '<div class="qhead">調べる問い</div>'+
+    '<ol class="q"><li>'+esc(c.q[0])+'</li><li>'+esc(c.q[1])+'</li></ol>';
+  $("s5t").textContent = c.n + "は、明君か、暴君か";
+  show("s3");
+}
+
+/* ---------- ジョーカー：席と皇帝を先に選ぶ ---------- */
+function openJoker(d){
+  ME.jSeat = null; ME.jEmp = null; $("mj").textContent = "";
+  const cols = CONF.cols, rows = CONF.rows;
+  const free = {}; (d.freeSeats||[]).forEach(s=>{ free[s.num+"-"+s.col] = true; });
+  const tpl = "grid-template-columns:26px repeat("+cols+",minmax(54px,1fr))";
+  let h = '<div class="colhead" style="'+tpl+'"><span></span>';
+  for(let c=1;c<=cols;c++) h += '<span>'+c+'列</span>';
+  h += '</div><div class="roomgrid" style="'+tpl+'">';
+  for(let r=1;r<=rows;r++){
+    h += '<div class="rownum">'+r+'</div>';
+    for(let c=1;c<=cols;c++){
+      h += free[r+"-"+c]
+        ? '<button class="pickseat" data-col="'+c+'" data-num="'+r+'">'+c+'列<br>'+r+'番目</button>'
+        : '<div class="pickseat taken">×</div>';
+    }
+  }
+  h += '</div>';
+  $("jseats").innerHTML = '<div class="scroll"><div class="roomwrap"><div class="side">窓　側</div><div class="room">'+h+'</div></div></div>';
+  $("jemps").innerHTML = '<div class="emps">' + (d.available||[]).map(a=>
+    '<button class="empchip" data-ps="'+a.suit+'" data-pr="'+a.rank+'">'+esc(a.person)+'<em>'+esc(a.dyn)+'</em></button>').join("") + '</div>';
+  show("sj");
+}
+$("jseats").addEventListener("click", e=>{
+  const b = e.target.closest(".pickseat[data-col]"); if(!b) return;
+  $("jseats").querySelectorAll(".pickseat").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); ME.jSeat = {col:+b.dataset.col, num:+b.dataset.num};
+});
+$("jemps").addEventListener("click", e=>{
+  const b = e.target.closest(".empchip"); if(!b) return;
+  $("jemps").querySelectorAll(".empchip").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); ME.jEmp = {suit:b.dataset.ps, rank:+b.dataset.pr};
+});
+$("jok").addEventListener("click", async ()=>{
+  if(!ME.jSeat){ $("mj").textContent = "席を選んでください。"; return; }
+  if(!ME.jEmp){ $("mj").textContent = "調べる皇帝を選んでください。"; return; }
+  $("jok").disabled = true; $("mj").textContent = "決めています…";
+  try{
+    const d = await api("jokerSet", {cls:ME.cls, name:ME.name, col:ME.jSeat.col, num:ME.jSeat.num,
+      pickSuit:ME.jEmp.suit, pickRank:ME.jEmp.rank});
+    ME.dispSuit = d.pickSuit; ME.dispRank = d.pickRank; ME.seat = {col:d.col, num:d.num};
+    $("mj").textContent = ""; openStep3();
+  }catch(err){
+    $("mj").textContent = err.message;
+    try{
+      const again = await api("claim", {cls:ME.cls, no:ME.no, name:ME.name, suit:"j", rank:ME.rank});
+      if(again.needChoice){ const msg = err.message; openJoker(again); $("mj").textContent = msg; }
+    }catch(e2){}
+  }
+  $("jok").disabled = false;
+});
+$("go3").addEventListener("click", ()=>show("s5"));
+
+/* ---------- 明君か暴君か ---------- */
+document.querySelectorAll(".v-btn").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll(".v-btn").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); ME.verdict = b.dataset.v;
+  });
+});
+$("send").addEventListener("click", async ()=>{
+  const reason = $("reason").value.trim();
+  if(!ME.verdict){ $("m5").textContent = "明君か暴君かを選んでください。"; return; }
+  if(reason.length < 15){ $("m5").textContent = "根拠をもう少し書いてください（15字以上）。"; return; }
+  $("send").disabled = true; $("m5").textContent = "送信しています…";
+  try{
+    const d = await api("submit", {cls:ME.cls, no:ME.no, name:ME.name, suit:ME.suit, rank:ME.rank,
+      verdict:ME.verdict, reason:reason});
+    ME.seat = d; setDisp(d.suit, d.rank, d.pick); showSeal(); showBoth(["s6"]); $("m5").textContent = "";
+  }catch(err){ $("m5").textContent = err.message; }
+  $("send").disabled = false;
+});
+
+function showSeal(){
+  const su = suitOf(ME.dispSuit), c = su.cards[ME.dispRank];
+  const tag = ME.suit === "j" ? "ジョーカー → " + su.mark + RANKS[ME.dispRank] : su.mark + RANKS[ME.dispRank];
+  $("myseal").innerHTML =
+    '<p style="text-align:center;margin:0">'+tag+'　'+esc(c.n)+'（'+esc(c.d)+'）</p>'+
+    '<div class="seal"><span class="sl">座　席</span><span class="sv">'+ME.seat.col+'列<br>'+ME.seat.num+'番目</span></div>'+
+    '<p class="hint" style="text-align:center">窓側から'+ME.seat.col+'列目、前から'+ME.seat.num+'番目の席です。</p>';
+}
+$("go6").addEventListener("click", ()=>{ showBoth(["s7"]); loadChart(); });
+$("refresh").addEventListener("click", loadChart);
+
+/* ---------- 座席表 ---------- */
+async function loadChart(){
+  try{
+    const st = await api("state", {cls:ME.cls});
+    CONF = st.conf;
+    $("cnt").textContent = st.entries.length + (st.conf ? " / " + (st.conf.cols*st.conf.rows) : "");
+    $("pend").textContent = st.pending ? "（入力中 "+st.pending+" 人）" : "";
+    $("chart").innerHTML = chartHTML(st.entries, st.conf);
+  }catch(err){ $("chart").innerHTML = '<p class="msg">'+esc(err.message)+'</p>'; }
+}
+function chartHTML(entries, conf){
+  const cols = (conf && conf.cols) ? conf.cols : 6;
+  const rows = (conf && conf.rows) ? conf.rows : 5;
+  const at = {};
+  entries.forEach(x=>{ at[x.num + "-" + x.col] = x; });
+  const tpl = "grid-template-columns:26px repeat(" + cols + ",minmax(84px,1fr))";
+
+  let head = '<div class="colhead" style="' + tpl + '"><span></span>';
+  for(let c=1;c<=cols;c++) head += '<span>' + c + '列</span>';
+  head += '</div>';
+
+  let grid = '<div class="roomgrid" style="' + tpl + '">';
+  for(let r=1;r<=rows;r++){
+    grid += '<div class="rownum">' + r + '</div>';
+    for(let c=1;c<=cols;c++){
+      const x = at[r + "-" + c];
+      grid += x ? seatHTML(x) : '<div class="seat blank">空席</div>';
+    }
+  }
+  grid += '</div>';
+
+  return '<div class="scroll"><div class="roomwrap"><div class="side">窓　側</div>' +
+         '<div class="room">' + head + grid + '</div></div></div>' +
+         '<p class="hint">左が窓側の1列目、上が前（黒板側）。左の数字は前からの順番です。</p>';
+}
+function cardTag(x){
+  if(x.suit === "j"){
+    if(x.pick){ const a = String(x.pick).split("-"), su = suitOf(a[0]);
+      return '<span class="'+(su.red?"red":"black")+'">'+su.mark+RANKS[+a[1]]+'</span><span class="red"> JK</span>'; }
+    return '<span class="red">JK</span>';
+  }
+  const su = suitOf(x.suit);
+  return '<span class="'+(su.red?"red":"black")+'">'+su.mark+RANKS[x.rank]+'</span>';
+}
+function seatHTML(x){
+  const badge = x.kind === "欠席"
+    ? '<span class="badge abs">欠席・代理</span>'
+    : (x.verdict ? '<span class="badge '+(x.verdict==="明君"?"mei":"bou")+'">'+esc(x.verdict)+'</span>' : "");
+  return '<div class="seat" data-id="'+esc(x.id)+'" onclick="this.classList.toggle(\'open\')">'+
+    '<div class="no">'+x.col+'列 '+x.num+'番目　'+cardTag(x)+'</div>'+
+    '<div class="emp">'+esc(x.person)+'</div>'+
+    '<div class="who">'+esc(x.name)+'</div>'+
+    badge +
+    (x.reason ? '<div class="reason">'+esc(x.reason)+'</div>' : "")+
+  '</div>';
+}
+
+/* ---------- 画面切替（生徒／教員） ---------- */
+$("toTeacher").addEventListener("click", ()=>{ $("stu").hidden=true; $("tea").hidden=false; });
+$("toStudent").addEventListener("click", ()=>{ $("tea").hidden=true; $("stu").hidden=false; });
+$("clearMe").addEventListener("click", ()=>{ store.del("ecard_me"); location.reload(); });
+
+/* ---------- 教員画面 ---------- */
+let PASS = "";
+$("unlock").addEventListener("click", async ()=>{
+  PASS = $("pass").value.trim(); $("mg").textContent = "確認しています…";
+  try{ await api("check",{pass:PASS}); $("gate").hidden=true; $("panel").hidden=false; $("mg").textContent=""; tload(); }
+  catch(err){ $("mg").textContent = err.message; }
+});
+$("startCls").addEventListener("click", async ()=>{
+  const suits = [...$("tsuits").querySelectorAll(".on")].map(b=>b.dataset.ts);
+  if(!suits.length){ $("mt").textContent="時代を1つ以上選んでください。"; return; }
+  const cols = +$("tcols").value || 6, rows = +$("trows").value || 5;
+  $("mt").textContent = "設定しています…";
+  try{
+    await api("setConf",{pass:PASS, cls:$("tcls").value, mode:$("tmode").value, suits:suits,
+      cols:cols, rows:rows, rule:$("trule").value, joker:$("tjoker").checked});
+    $("mt").className="msg ok"; $("mt").textContent="開始しました。生徒に画面を開かせてください。"; tload();
+  }catch(err){ $("mt").className="msg"; $("mt").textContent=err.message; }
+});
+$("resetCls").addEventListener("click", async ()=>{
+  if(!confirm($("tcls").value+" の記録をすべて消します。よろしいですか。")) return;
+  try{ await api("reset",{pass:PASS, cls:$("tcls").value}); $("mt").textContent="消しました。"; tload(); }
+  catch(err){ $("mt").textContent=err.message; }
+});
+$("absent").addEventListener("click", async ()=>{
+  const name = $("aname").value.trim();
+  if(!name){ $("ma").textContent="名前を入れてください。"; return; }
+  $("ma").textContent = "引いています…";
+  try{
+    const d = await api("absent",{pass:PASS, cls:$("tcls").value, no:$("ano").value.trim(), name});
+    const su = suitOf(d.suit);
+    $("ma").className="msg ok";
+    $("ma").textContent = name+"さん → "+su.mark+RANKS[d.rank]+" "+d.person+"／"+d.col+"列 "+d.num+"番目";
+    $("aname").value=""; $("ano").value=""; tload();
+  }catch(err){ $("ma").className="msg"; $("ma").textContent=err.message; }
+});
+$("trefresh").addEventListener("click", tload);
+$("tprint").addEventListener("click", ()=>window.print());
+$("tcopy").addEventListener("click", async ()=>{
+  const head = "クラス\t番号\t名前\tマーク\t数字\t人物\t王朝\t評価\t根拠\t列\t前から\t区分";
+  const rows = (TSTATE.entries||[]).map(x=>{
+    let mk, rk;
+    if(x.suit === "j"){
+      mk = "ジョーカー";
+      if(x.pick){ const a = String(x.pick).split("-"); rk = suitOf(a[0]).mark + RANKS[+a[1]]; } else { rk = ""; }
+    }else{ mk = suitOf(x.suit).mark; rk = RANKS[x.rank]; }
+    return [x.cls,x.no,x.name,mk,rk,x.person,x.dyn,x.verdict,String(x.reason||"").replace(/\s+/g," "),x.col,x.num,x.kind].join("\t");
+  });
+  const text = [head,...rows].join("\n");
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  $("mc").textContent = "コピーしました。"; setTimeout(()=>$("mc").textContent="",4000);
+});
+
+let TSTATE = {entries:[]};
+async function tload(){
+  try{
+    const st = await api("state",{cls:$("tcls").value});
+    TSTATE = st;
+    $("tcnt").textContent = st.entries.length;
+    $("tpend").textContent = st.pending ? "（入力中 "+st.pending+" 人）" : "";
+    if(st.conf){ $("tmode").value = st.conf.mode;
+      $("tcols").value = st.conf.cols; $("trows").value = st.conf.rows; $("trule").value = st.conf.rule;
+      $("tjoker").checked = !!st.conf.joker;
+      $("tcnt").textContent = st.entries.length + " / " + (st.conf.cols*st.conf.rows);
+      [...$("tsuits").children].forEach(b=>b.classList.toggle("on", st.conf.suits.includes(b.dataset.ts))); }
+    $("tchart").innerHTML = chartHTML(st.entries, st.conf);
+    $("tlist").innerHTML = listHTML(st.entries) + holdsHTML(st.holds||[]);
+  }catch(err){ $("tchart").innerHTML = '<p class="msg">'+esc(err.message)+'</p>'; }
+}
+function listHTML(entries){
+  if(!entries.length) return '<p class="hint">まだ記録がありません。</p>';
+  let h = '<table class="list"><tr><th>番号</th><th>名前</th><th>札</th><th>人物</th><th>評価</th><th>席</th><th>区分</th><th></th></tr>';
+  entries.slice().sort((a,b)=>(+a.no||99)-(+b.no||99)).forEach(x=>{
+    h += '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.name)+'</td><td>'+cardTag(x)+'</td>'+
+      '<td>'+esc(x.person)+'</td><td>'+esc(x.verdict)+'</td><td>'+x.col+'列'+x.num+'番目</td><td>'+esc(x.kind)+'</td>'+
+      '<td><button class="link" data-del="'+esc(x.id)+'">削除</button></td></tr>';
+  });
+  return h + '</table>';
+}
+function holdsHTML(holds){
+  if(!holds.length) return "";
+  let h = '<h3 class="sec">入力中（まだ提出していない人）</h3>'+
+    '<p class="hint">ジョーカーの人はこの時点で席を押さえています。途中でやめた生徒が残っていたら削除してください。席とカードが空きに戻ります。</p>'+
+    '<table class="list"><tr><th>番号</th><th>名前</th><th>札</th><th>人物</th><th>予約席</th><th></th></tr>';
+  holds.forEach(x=>{
+    h += '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.name)+'</td><td>'+cardTag(x)+'</td>'+
+      '<td>'+esc(x.person)+'</td><td>'+(x.col ? x.col+'列'+x.num+'番目' : '—')+'</td>'+
+      '<td><button class="link" data-del="'+esc(x.id)+'">削除</button></td></tr>';
+  });
+  return h + '</table>';
+}
+$("tlist").addEventListener("click", async e=>{
+  const b = e.target.closest("[data-del]"); if(!b) return;
+  if(!confirm("この記録を削除します。よろしいですか。")) return;
+  try{ await api("remove",{pass:PASS, cls:$("tcls").value, id:b.dataset.del}); tload(); }
+  catch(err){ alert(err.message); }
+});
+
+/* ---------- 自動更新 ---------- */
+setInterval(()=>{
+  if(!$("tea").hidden && !$("panel").hidden) tload();
+  else if(!$("s7").hidden) loadChart();
+}, 12000);
+
+/* ---------- 前回の入力を復元 ---------- */
+(function(){
+  try{
+    const saved = JSON.parse(store.get("ecard_me")||"null");
+    if(saved){ $("cls").value = saved.cls; $("no").value = saved.no; $("name").value = saved.name; }
+  }catch(e){}
+  if(location.hash === "#teacher"){ $("stu").hidden=true; $("tea").hidden=false; }
+})();
+</script>
+</body>
+</html>
